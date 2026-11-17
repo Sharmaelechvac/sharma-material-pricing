@@ -1,1 +1,130 @@
-{}
+{
+  "hvac|boca plate 5\"x8\" 16ga (boca58)": {
+    "src": "img/hvac-boca-plate-5-x8-16ga-boca58.webp",
+    "source": "https://www.squarepegsupply.com/product/boca58"
+  },
+  "hvac|pvc 3/4\" 90 elbow sxs (406-007bc)": {
+    "src": "img/hvac-pvc-3-4-90-elbow-sxs-406-007bc.webp",
+    "source": "https://www.doitbest.com/product/426845/charlotte-pipe-3-4-in-slip-x-slip-schedule-40-90-deg-pvc-elbow-1-4-bend-426845/"
+  },
+  "electrical|in-use cover intermatic wp7000g": {
+    "src": "img/in-use-cover-intermatic-wp7000g.webp",
+    "source": "https://electricalparts.com/products/intermatic-wp7000g"
+  },
+  "electrical|siemens mm0202b1200 200a meter-main combo, back-to-back w/ panel on garage w wall": {
+    "src": "img/siemens-mm0202b1200-200a-meter-main-combo-back-to-back-w-panel-on-garage-w-wall.webp",
+    "source": "https://www.crawfordelectricsupply.com/product/detail/222811/siemens-mm0202b1200"
+  },
+  "electrical|siemens sn3048l1200 200a main-lug 30-space/48-circuit load center (per sanjay via nik 10/28: residential = siemens 200a 30-space; replaces pn4040l1200 $200 est.)": {
+    "src": "img/siemens-sn3048l1200-200a-main-lug-30-space-48-circuit-load-center-per-sanjay-via-nik-10-28-residential-siemens-200a-30-space-replaces-pn4040l1200-200-est.webp",
+    "source": "https://www.menards.com/main/electrical/circuit-protection-distribution/main-lug-breaker-box/siemens-reg-sn-indoor-main-lug-plug-on-neutral-load-center/sn3048l1200/p-12148367796087705-c-6438.htm"
+  },
+  "electrical|siemens sn3048l1200 30-space 200a ml load center (reference)": {
+    "src": "img/siemens-sn3048l1200-30-space-200a-ml-load-center-reference.webp",
+    "source": "https://www.menards.com/main/electrical/circuit-protection-distribution/main-lug-breaker-box/siemens-reg-sn-indoor-main-lug-plug-on-neutral-load-center/sn3048l1200/p-12148367796087705-c-6438.htm"
+  },
+  "electrical|siemens q220 2p 20a (nona condenser)": {
+    "src": "img/siemens-q220-2p-20a-nona-condenser.webp",
+    "source": "https://superbreakers.com/products/siemens-q220-20-amp"
+  },
+  "electrical|siemens q230 2-pole 30a, water heater": {
+    "src": "img/siemens-q230-2-pole-30a-water-heater.webp",
+    "source": "https://superbreakers.com/collections/siemens/products/siemens-q230-30-amp"
+  },
+  "electrical|siemens q230gf 2p 30a gfci (reference)": {
+    "src": "img/siemens-q230gf-2p-30a-gfci-reference.webp",
+    "source": "https://www.resllcstore.com/products/siemens-q230gf-30-amp-double-pole-240v-pigtail-neutral-gfci-ground-fault-circuit-breaker-ul"
+  },
+  "electrical|siemens qf230a 2p 30a gfci (si duplex dryer)": {
+    "src": "img/siemens-qf230a-2p-30a-gfci-si-duplex-dryer.webp",
+    "source": "https://www.resllcstore.com/products/siemens-qf230a-30-amp-double-pole-240v-pigtail-neutral-gfci-ground-fault-circuit-breaker-ul"
+  },
+  "electrical|siemens qf240a 2p 40a gfci (reference)": {
+    "src": "img/siemens-qf240a-2p-40a-gfci-reference.webp",
+    "source": "https://electyko.com/producto/breaker-falla-a-tierra-40a-2-polos-siemens/"
+  },
+  "electrical|siemens q115dfn/q120dfn dual-function afci/gfci (9x20a, 5x15a)": {
+    "src": "img/siemens-q115dfn-q120dfn-dual-function-afci-gfci-9x20a-5x15a.webp",
+    "source": "https://superbreakers.com/collections/siemens/products/siemens-q120dfn-1-pole-dual-function-circuit-breaker"
+  },
+  "electrical|single-pole switch p&s tm870w": {
+    "src": "img/single-pole-switch-p-s-tm870w.webp",
+    "source": "https://www.standardelectricsupply.com/Legrand-Pass-And-Seymour-TM870-W-TradeMaster-Decorator-Switch"
+  },
+  "electrical|nema 14-30r p&s 3864": {
+    "src": "img/nema-14-30r-p-s-3864.webp",
+    "source": "https://boxflystore.net/tienda/pass-seymour-legrand-3864-straight-blade-dryer-outlet-nema-14-30r-powe-amz_B000NCWW7Y"
+  },
+  "electrical|nema 14-50r p&s 3894": {
+    "src": "img/nema-14-50r-p-s-3894.webp",
+    "source": "https://www.standardelectricsupply.com/Legrand-Pass-And-Seymour-3894-Straight-Blade-Receptacle"
+  },
+  "electrical|tr duplex receptacle p&s 3232trw": {
+    "src": "img/tr-duplex-receptacle-p-s-3232trw.webp",
+    "source": "https://www.cityelectricsupply.com/tamper-resistant?man=13306&pagesize=15&viewmode=grid&pagenumber=1"
+  },
+  "electrical|wr tr duplex p&s 3232trwrw (front + 2 lanai)": {
+    "src": "img/wr-tr-duplex-p-s-3232trwrw-front-2-lanai.webp",
+    "source": "https://www2.elliottelectric.com/P/Item/PAS/3232TRWRW/Alternate"
+  },
+  "electrical|decora 1g plate p&s tp26w": {
+    "src": "img/decora-1g-plate-p-s-tp26w.webp",
+    "source": "https://www.supplyhouse.com/Pass-Seymour-TP26W-1-Gang-Decorator-Switch-Wall-Plate-White"
+  },
+  "electrical|decora 2g plate tp262w": {
+    "src": "img/decora-2g-plate-tp262w.webp",
+    "source": "https://evolt.ca/buy-pass-seymour-tp262w-2-gang-nylon-wall-plate-white"
+  },
+  "electrical|decora 3g plate tp263w": {
+    "src": "img/decora-3g-plate-tp263w.webp",
+    "source": "https://www.supplyhouse.com/Pass-Seymour-TP263W-3-Gang-Decorator-Switch-Wall-Plate-White"
+  },
+  "electrical|decora 4g plate tp264w": {
+    "src": "img/decora-4g-plate-tp264w.webp",
+    "source": "https://evolt.ca/buy-pass-seymour-tp264w-4-gang-wall-plate"
+  },
+  "electrical|duplex plate p&s tp8w": {
+    "src": "img/duplex-plate-p-s-tp8w.webp",
+    "source": "https://www.supplyhouse.com/Pass-Seymour-TP8W-1-Gang-Duplex-Receptacle-Wall-Plate-White"
+  },
+  "electrical|power outlet plate tp703w": {
+    "src": "img/power-outlet-plate-tp703w.webp",
+    "source": "https://www.qedelectric.com/product/category/US_240803070000/single-receptacle-plates?fq=RGVwdGgfMS80IEluY2g&fq=RGVwdGgfMC4yNCBJbmNo"
+  },
+  "electrical|2in se cap clamp-on topaz 736": {
+    "src": "img/2in-se-cap-clamp-on-topaz-736.webp",
+    "source": "https://uisupplies.com/Product-List/Product-SKU/CategoryID/1205/ProductID/9521/p/736"
+  },
+  "electrical|2in insulated bushing topaz 336tz": {
+    "src": "img/2in-insulated-bushing-topaz-336tz.webp",
+    "source": "https://coburns-feature.rocframework.net/products/topaz-336tz-2-inch-ig-bush-layin-751338132009"
+  },
+  "electrical|1g nail-on psb118 (45 rec + 24 sw + 7 smoke)": {
+    "src": "img/1g-nail-on-psb118-45-rec-24-sw-7-smoke.webp",
+    "source": "https://zensupply.com/centaur-1-gang-plastic-switch-boxes-nail-on-18-22-cu-in-per-100/"
+  },
+  "electrical|fan/fixture support box cm-fslpb": {
+    "src": "img/fan-fixture-support-box-cm-fslpb.webp",
+    "source": "https://voomisupply.com/products/centaur-cm-fslpb-plastic-l-shaped-fan-fixture-support-box"
+  },
+  "electrical|ground rod clamp f4p grc-58": {
+    "src": "img/ground-rod-clamp-f4p-grc-58.webp",
+    "source": "https://www.crawfordelectricsupply.com/product/detail/13167/nsi-tork-grc-58"
+  },
+  "electrical|smoke alarm brk smi100-ac": {
+    "src": "img/smoke-alarm-brk-smi100-ac.webp",
+    "source": "https://www.grainger.com/product/BRK-Smoke-Alarm-Smoke-827C10"
+  },
+  "electrical|smoke/co combo brk smico100-ac": {
+    "src": "img/smoke-co-combo-brk-smico100-ac.webp",
+    "source": "https://edmondsonsupply.com/products/brk-first-alert-smico100-ac-interconnectable-ion-smoke-co-alarm-w-battery-backup"
+  },
+  "electrical|siemens qf250a 2p 50a gfci (ev)": {
+    "src": "img/siemens-qf250a-2p-50a-gfci-ev.webp",
+    "source": "https://www.resllcstore.com/products/siemens-qf250a-50-amp-double-pole-240v-pigtail-neutral-gfci-ground-fault-circuit-breaker-ul"
+  },
+  "electrical|3-way switch p&s tm873w (4 pairs)": {
+    "src": "img/3-way-switch-p-s-tm873w-4-pairs.webp",
+    "source": "https://www.supplyhouse.com/Pass-Seymour-TM873W-Radiant-15A-3-Way-Switch-White-120-277V"
+  }
+}
