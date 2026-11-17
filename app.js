@@ -116,11 +116,6 @@
       return it;
     });
 
-    function latestSum(list) {
-      var t = 0;
-      list.forEach(function (it) { var v = Number(it.latest.price); if (isFinite(v)) t += v; });
-      return t;
-    }
     function staleItems(list) { return list.filter(function (it) { return isStale(it.latest); }); }
     function changeTextOf(ch) {
       if (!ch || ch.diff === 0) return "";
@@ -135,15 +130,15 @@
       var hi = items.filter(function (i) { return i.trade === "hvac"; });
       var se = staleItems(ei).length, sh = staleItems(hi).length;
       stats.innerHTML =
-        '<div class="stat navy"><span class="stat-num">' + money(latestSum(ei)) + '</span><span class="stat-lab">Electrical subtotal</span></div>' +
-        '<div class="stat gold"><span class="stat-num">' + money(latestSum(hi)) + '</span><span class="stat-lab">HVAC subtotal</span></div>' +
-        '<div class="stat"><span class="stat-num">' + money(latestSum(items)) + '</span><span class="stat-lab">Combined total</span></div>' +
+        '<div class="stat navy"><span class="stat-num">' + ei.length + '</span><span class="stat-lab">Electrical items priced</span></div>' +
+        '<div class="stat gold"><span class="stat-num">' + hi.length + '</span><span class="stat-lab">HVAC items priced</span></div>' +
+        '<div class="stat"><span class="stat-num">' + items.length + '</span><span class="stat-lab">All items priced</span></div>' +
         '<button type="button" class="stat stale-tile' + (se + sh > 0 ? " hot" : "") + '" id="staleTile"><span class="stat-num">' + (se + sh) + '</span><span class="stat-lab">Stale — Elec ' + se + " · HVAC " + sh + "</span></button>";
     } else {
       var sc = staleItems(items).length;
       stats.innerHTML =
-        '<div class="stat"><span class="stat-num">' + money(latestSum(items)) + '</span><span class="stat-lab">Latest unit-price sum</span></div>' +
         '<div class="stat"><span class="stat-num">' + items.length + '</span><span class="stat-lab">Items priced</span></div>' +
+        '<div class="stat"><span class="stat-num">' + all.length + '</span><span class="stat-lab">Distributor prices on file</span></div>' +
         '<button type="button" class="stat stale-tile' + (sc > 0 ? " hot" : "") + '" id="staleTile"><span class="stat-num">' + sc + '</span><span class="stat-lab">Items stale</span></button>';
     }
 
@@ -151,7 +146,7 @@
     items.forEach(function (it) { if (it.latest.date && it.latest.date > newest) newest = it.latest.date; });
     document.getElementById("asof").textContent =
       (newest ? "Prices as of " + fmtDate(newest) : "No dated prices on file") +
-      " · " + all.length + " price entries on file" + (COMBINED ? " across both trades." : " for " + LABEL + ".");
+      " · " + all.length + " distributor prices on file" + (COMBINED ? " across both trades." : " for " + LABEL + ".");
 
     // Filter state + chips (guidance section 4).
     var state = { q: "", supplier: "", stale: false, changed: false, movers: false, trade: "all", sort: "name" };

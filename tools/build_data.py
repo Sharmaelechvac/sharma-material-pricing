@@ -9,8 +9,13 @@ Optional columns used when present: house (house or job name for the rollup).
 
 Trade split: an item whose name starts with "HVAC:" belongs to HVAC (the
 prefix is stripped for display). Rows whose status is tagged "(HVAC)" in the
-tracker (the web-priced HVAC equipment and duct lines) are HVAC too.
-Everything else is electrical.
+tracker are HVAC too. Everything else is electrical.
+
+DISTRIBUTOR PRICES ONLY (Sanjay, 2026-11-17: "I really only want the prices
+we pay to our distributors"): any row whose status marks it as a web/list
+price (status contains "WEB" — web list, supplier web, CES web not signed
+in) is excluded. The app carries only prices Sharma actually pays its
+distributors (ticket/quote prices) plus Sanjay's own rule prices.
 Only rows with a parseable price and a non-empty item are carried over.
 prices.json is a local working file (gitignored); encrypt it with
 tools/encrypt_prices.py before committing — only prices.enc.json is published.
@@ -25,7 +30,7 @@ DEFAULT_CSV = os.path.expanduser("~/workspace/cost-estimator/price-tracker.csv")
 
 def main():
     csv_path = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_CSV
-    entries, skipped = [], 0
+    entries, skipped, web_dropped = [], 0, 0
     if os.path.exists(csv_path):
         with open(csv_path, newline="", encoding="utf-8-sig") as f:
             for row in csv.DictReader(f):
@@ -39,6 +44,9 @@ def main():
                     skipped += 1
                     continue
                 status_raw = (row.get("status") or "")
+                if "WEB" in status_raw.upper():
+                    web_dropped += 1
+                    continue
                 trade = "electrical"
                 if item.upper().startswith("HVAC:"):
                     trade = "hvac"
@@ -75,7 +83,7 @@ def main():
     out = os.path.join(ROOT, "prices.json")
     with open(out, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
-    print("Wrote %s (%d entries, %d skipped)." % (out, len(entries), skipped))
+    print("Wrote %s (%d entries, %d skipped, %d web/list rows dropped)." % (out, len(entries), skipped, web_dropped))
 
 
 if __name__ == "__main__":
