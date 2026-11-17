@@ -57,6 +57,11 @@ body.trade-hvac .chip.active{background:var(--gold);color:var(--dnavy);border-co
 .item-line3{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;align-items:center}
 .item-meta{color:var(--gray);font-size:13px}
 .tag{display:inline-block;border:1px solid var(--line);border-radius:4px;padding:1px 7px;font:700 11px/1.7 var(--head);text-transform:uppercase;letter-spacing:.04em;color:var(--gray)}
+.tag.web{border-color:var(--gold);background:var(--gold);color:var(--dnavy)}
+.tag.ticket{border-color:var(--navy);color:var(--navy)}
+.tag.aging{border:1px dashed var(--gold);color:var(--ink)}
+.seg-btn.gold-active{background:var(--gold);border-color:var(--gold);color:var(--dnavy)}
+.req-row{display:flex;gap:8px;padding:2px 0 6px}
 .tag.elec{border-color:var(--navy);color:var(--navy)}
 .tag.hvac{border-color:var(--gold);background:var(--gold);color:var(--dnavy)}
 .tag.stale{border:2px solid var(--gold);color:var(--ink)}

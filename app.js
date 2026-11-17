@@ -45,13 +45,25 @@
   function tradeTag(t) {
     return t === "hvac" ? '<span class="tag hvac">HVAC</span>' : '<span class="tag elec">ELEC</span>';
   }
+  function priceType(e) {
+    // The tracker status text already carries the kind of price this is.
+    if (/WEB/i.test(e.status || "")) return "web";
+    if (/SANJAY/i.test((e.status || "") + " " + (e.supplier || ""))) return "sanjay";
+    return "ticket";
+  }
   function flagsFor(e) {
     var out = "";
+    var t = priceType(e);
+    if (t === "web") out += '<span class="tag web">WEB LIST</span>';
+    else if (t === "sanjay") out += '<span class="tag rule">SANJAY RULE</span>';
+    else out += '<span class="tag ticket">TICKET</span>';
     if (isStale(e)) {
       var a = ageDays(e);
       out += '<span class="tag stale">STALE' + (a !== null ? " · " + a + " days" : "") + "</span>";
+    } else {
+      var a2 = ageDays(e);
+      if (a2 !== null && a2 > 30 && a2 <= STALE_DAYS) out += '<span class="tag aging">AGING · ' + a2 + " days</span>";
     }
-    if (/SANJAY PRICE/i.test(e.status || "")) out += '<span class="tag rule">SANJAY PRICE</span>';
     if (!e.source) out += '<span class="tag nosrc">no source</span>';
     if (!e.date) out += '<span class="tag nosrc">no date</span>';
     return out;
@@ -105,10 +117,10 @@
       return t;
     }
     function staleItems(list) { return list.filter(function (it) { return isStale(it.latest); }); }
-    function changeText(it) {
-      if (!it.change || it.change.diff === 0) return "";
-      var s = it.change.diff > 0 ? "+" : "&minus;";
-      return s + money(Math.abs(it.change.diff)) + " (" + (it.change.pct > 0 ? "+" : "") + it.change.pct + "%)";
+    function changeTextOf(ch) {
+      if (!ch || ch.diff === 0) return "";
+      var s = ch.diff > 0 ? "+" : "&minus;";
+      return s + money(Math.abs(ch.diff)) + " (" + (ch.pct > 0 ? "+" : "") + ch.pct + "%)";
     }
 
     // Numbers-first stat strip (guidance section 3; combined per section 12).
@@ -125,7 +137,7 @@
     } else {
       var sc = staleItems(items).length;
       stats.innerHTML =
-        '<div class="stat"><span class="stat-num">' + money(latestSum(items)) + '</span><span class="stat-lab">Latest prices total</span></div>' +
+        '<div class="stat"><span class="stat-num">' + money(latestSum(items)) + '</span><span class="stat-lab">Latest unit-price sum</span></div>' +
         '<div class="stat"><span class="stat-num">' + items.length + '</span><span class="stat-lab">Items priced</span></div>' +
         '<button type="button" class="stat stale-tile' + (sc > 0 ? " hot" : "") + '" id="staleTile"><span class="stat-num">' + sc + '</span><span class="stat-lab">Items stale</span></button>';
     }
@@ -137,7 +149,8 @@
       " · " + all.length + " price entries on file" + (COMBINED ? " across both trades." : " for " + LABEL + ".");
 
     // Filter state + chips (guidance section 4).
-    var state = { q: "", supplier: "", stale: false, changed: false, trade: "all", sort: "name" };
+    var state = { q: "", supplier: "", stale: false, changed: false, movers: false, trade: "all", sort: "name" };
+    var lastView = [];
     var suppliers = [];
     all.forEach(function (e) { if (e.supplier && suppliers.indexOf(e.supplier) === -1) suppliers.push(e.supplier); });
     suppliers.sort();
@@ -147,17 +160,20 @@
     }
     chips.innerHTML = chip("All suppliers", "supplier", "") +
       suppliers.map(function (s) { return chip(s, "supplier", s); }).join("") +
-      chip("Stale only", "stale", "") + chip("Changed 30d", "changed", "");
+      chip("Stale only", "stale", "") + chip("Changed 30d", "changed", "") + chip("Movers >5%", "movers", "");
     function paintChips() {
       chips.querySelectorAll(".chip").forEach(function (c) {
         var k = c.getAttribute("data-kind"), v = c.getAttribute("data-val"), on = false;
         if (k === "supplier") on = state.supplier === v;
         if (k === "stale") on = state.stale;
         if (k === "changed") on = state.changed;
+        if (k === "movers") on = state.movers;
         c.classList.toggle("active", on);
       });
       document.querySelectorAll(".seg-btn").forEach(function (b) {
-        b.classList.toggle("active", b.getAttribute("data-t") === state.trade);
+        var on = b.getAttribute("data-t") === state.trade;
+        b.classList.toggle("active", on);
+        b.classList.toggle("gold-active", on && b.getAttribute("data-t") === "hvac");
       });
     }
     chips.addEventListener("click", function (ev) {
@@ -167,6 +183,7 @@
       if (k === "supplier") state.supplier = c.getAttribute("data-val");
       if (k === "stale") state.stale = !state.stale;
       if (k === "changed") state.changed = !state.changed;
+      if (k === "movers") state.movers = !state.movers;
       paintChips(); draw();
     });
     var staleTile = document.getElementById("staleTile");
@@ -176,6 +193,41 @@
         b.addEventListener("click", function () { state.trade = b.getAttribute("data-t"); paintChips(); draw(); });
       });
     }
+    // Re-quote worklist (audit F4): stale items, oldest first, copyable for Warren.
+    var reqRow = document.createElement("div");
+    reqRow.className = "req-row";
+    reqRow.innerHTML = '<button type="button" class="chip" id="reqBtn">Re-quote list</button>' +
+      '<button type="button" class="chip" id="copyBtn" hidden>Copy list</button>';
+    chips.parentNode.insertBefore(reqRow, chips.nextSibling);
+    reqRow.querySelector("#reqBtn").addEventListener("click", function () {
+      state.stale = true;
+      state.sort = "oldest";
+      document.getElementById("sort").value = "oldest";
+      reqRow.querySelector("#copyBtn").hidden = false;
+      paintChips(); draw();
+    });
+    reqRow.querySelector("#copyBtn").addEventListener("click", function () {
+      var btn = this;
+      var lines = ["Item\tPrice\tUnit\tSupplier\tDate\tSource ticket"];
+      lastView.forEach(function (v) {
+        lines.push([v.it.name, Number(v.e.price), v.e.unit || "", v.e.supplier || "", v.e.date || "no date", v.e.source || "no source"].join("\t"));
+      });
+      var text = lines.join("\n");
+      function done() {
+        btn.textContent = "Copied " + lastView.length + " items";
+        setTimeout(function () { btn.textContent = "Copy list"; }, 2000);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, done);
+      else {
+        var ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand("copy"); } catch (err) {}
+        document.body.removeChild(ta);
+        done();
+      }
+    });
     document.getElementById("q").addEventListener("input", function (ev) { state.q = ev.target.value.trim().toLowerCase(); draw(); });
     document.getElementById("sort").addEventListener("change", function (ev) { state.sort = ev.target.value; draw(); });
 
@@ -189,7 +241,8 @@
       var t0 = parseDate(pts[0].date).getTime(), t1 = parseDate(pts[pts.length - 1].date).getTime();
       var ps = pts.map(function (e) { return Number(e.price); }).filter(isFinite);
       if (!ps.length) return "";
-      var lo = Math.min.apply(null, ps), hi = Math.max.apply(null, ps);
+      var loP = Math.min.apply(null, ps), hiP = Math.max.apply(null, ps);
+      var lo = loP, hi = hiP;
       if (hi === lo) { hi = lo + 1; }
       var xy = pts.map(function (e) {
         var x = t1 === t0 ? W / 2 : P + ((parseDate(e.date).getTime() - t0) / (t1 - t0)) * (W - 2 * P);
@@ -200,6 +253,8 @@
       var last = xy[xy.length - 1];
       return '<svg class="chart" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Price history chart">' +
         '<polyline points="' + line + '" fill="none" stroke="#264387" stroke-width="2"/>' +
+        '<text x="' + P + '" y="11" class="chart-lab">' + money(hiP) + "</text>" +
+        '<text x="' + P + '" y="' + (H - 20) + '" class="chart-lab">' + money(loP) + "</text>" +
         '<circle cx="' + last[0] + '" cy="' + last[1] + '" r="4.5" fill="#F0A846" stroke="#1a2f61" stroke-width="1.5"/>' +
         '<text x="' + P + '" y="' + (H - 4) + '" class="chart-lab">' + esc(pts[0].date) + "</text>" +
         '<text x="' + (W - P) + '" y="' + (H - 4) + '" text-anchor="end" class="chart-lab">' + esc(pts[pts.length - 1].date) + "</text></svg>";
@@ -238,23 +293,52 @@
         if (state.q) {
           var inName = it.name.toLowerCase().indexOf(state.q) !== -1;
           var inSup = it.rows.some(function (r) { return (r.e.supplier || "").toLowerCase().indexOf(state.q) !== -1; });
-          if (!inName && !inSup) return false;
+          var inSrc = it.rows.some(function (r) { return (r.e.source || "").toLowerCase().indexOf(state.q) !== -1; });
+          if (!inName && !inSup && !inSrc) return false;
         }
         if (state.supplier && !it.rows.some(function (r) { return r.e.supplier === state.supplier; })) return false;
         if (state.stale && !isStale(L)) return false;
         if (state.changed && !it.changed30) return false;
+        if (state.movers && !(it.change && Math.abs(it.change.pct) > 5)) return false;
         return true;
       });
-      if (state.sort === "price") shown.sort(function (a, b) { return Number(b.latest.price) - Number(a.latest.price); });
-      else if (state.sort === "updated") shown.sort(function (a, b) {
-        var da = parseDate(a.latest.date), db = parseDate(b.latest.date);
+      // Displayed entry: normally the global latest; under a supplier filter,
+      // that supplier's own latest price (audit F5 — never show another
+      // supplier's price under a supplier filter).
+      var view = shown.map(function (it) {
+        var e = it.latest, ch = it.change;
+        if (state.supplier) {
+          var rows = it.rows.filter(function (r) { return r.e.supplier === state.supplier; });
+          e = rows[0].e;
+          ch = null;
+          if (rows.length > 1) {
+            var pv = rows[1].e;
+            if (isFinite(Number(e.price)) && isFinite(Number(pv.price)) && Number(pv.price) !== 0) {
+              var d = Number(e.price) - Number(pv.price);
+              ch = { diff: d, pct: Math.round((d / Number(pv.price)) * 100) };
+            }
+          }
+        }
+        return { it: it, e: e, ch: ch };
+      });
+      lastView = view;
+      if (state.sort === "price") view.sort(function (a, b) { return Number(b.e.price) - Number(a.e.price); });
+      else if (state.sort === "updated") view.sort(function (a, b) {
+        var da = parseDate(a.e.date), db = parseDate(b.e.date);
         return (db ? db.getTime() : 0) - (da ? da.getTime() : 0);
       });
-      else if (state.sort === "change") shown.sort(function (a, b) {
-        var ca = a.change ? Math.abs(a.change.pct) : -1, cb = b.change ? Math.abs(b.change.pct) : -1;
+      else if (state.sort === "change") view.sort(function (a, b) {
+        var ca = a.ch ? Math.abs(a.ch.pct) : -1, cb = b.ch ? Math.abs(b.ch.pct) : -1;
         return cb - ca;
       });
-      else shown.sort(function (a, b) { return a.name.localeCompare(b.name); });
+      else if (state.sort === "oldest") view.sort(function (a, b) {
+        var da = parseDate(a.e.date), db = parseDate(b.e.date);
+        if (!da && !db) return 0;
+        if (!da) return -1;
+        if (!db) return 1;
+        return da.getTime() - db.getTime();
+      });
+      else view.sort(function (a, b) { return a.it.name.localeCompare(b.it.name); });
 
       var box = document.getElementById("items");
       var tw = document.getElementById("tablewrap");
@@ -266,8 +350,8 @@
       }
       if (!shown.length) { box.innerHTML = '<p class="empty">No items match</p>'; tw.innerHTML = ""; return; }
 
-      box.innerHTML = shown.map(function (it) {
-        var L = it.latest, ch = changeText(it);
+      box.innerHTML = view.map(function (v) {
+        var it = v.it, L = v.e, ch = changeTextOf(v.ch);
         return '<div class="item t-' + it.trade + '"><button class="item-head" data-key="' + esc(it.key) + '">' +
           '<span class="item-line1"><span class="item-name">' + esc(it.name) + "</span>" +
           '<span class="item-price">' + money(L.price) + "</span></span>" +
@@ -280,12 +364,12 @@
       }).join("");
 
       tw.innerHTML = '<table class="ptable"><thead><tr><th>Item</th><th class="num">Latest price</th><th>Unit</th><th>Supplier</th><th class="num">Date</th><th class="num">Change</th><th>Source</th><th>Flags</th></tr></thead><tbody>' +
-        shown.map(function (it) {
-          var L = it.latest;
+        view.map(function (v) {
+          var it = v.it, L = v.e;
           return '<tr data-key="' + esc(it.key) + '"><td>' + esc(it.name) + (COMBINED ? " " + tradeTag(it.trade) : "") + "</td>" +
             '<td class="num price-cell">' + money(L.price) + "</td><td>" + esc(L.unit || "") + "</td><td>" + esc(L.supplier) + "</td>" +
             '<td class="num">' + (L.date ? esc(L.date) : "no date") + "</td>" +
-            '<td class="num">' + (changeText(it) || "—") + "</td>" +
+            '<td class="num">' + (changeTextOf(v.ch) || "—") + "</td>" +
             "<td>" + (L.source ? esc(L.source) : "no source") + "</td><td>" + flagsFor(L) + "</td></tr>";
         }).join("") + "</tbody></table>";
 
