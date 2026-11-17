@@ -1,0 +1,4 @@
+# Plain price data is never committed. Only prices.enc.json goes in git.
+prices.json
+*.plain.json
+.env
