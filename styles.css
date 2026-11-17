@@ -68,7 +68,14 @@ body.trade-hvac .chip.active{background:var(--gold);color:var(--dnavy);border-co
   #items{display:none}
   #tablewrap{display:block}
 }
-.ptable{width:100%;border-collapse:collapse;font-size:15px}
+.ptable{width:100%;border-collapse:collapse;font-size:15px;table-layout:fixed}
+.ptable th:nth-child(1){width:22%}.ptable th:nth-child(2){width:10%}.ptable th:nth-child(3){width:6%}
+.ptable th:nth-child(4){width:14%}.ptable th:nth-child(5){width:9%}.ptable th:nth-child(6){width:10%}
+.ptable th:nth-child(7){width:19%}.ptable th:nth-child(8){width:10%}
+.ptable td{overflow-wrap:anywhere}
+.hist td{overflow-wrap:anywhere}
+.src-chip{overflow-wrap:anywhere;max-width:100%}
+#sheet{overflow:hidden}
 .ptable th{position:sticky;top:0;background:#fff;text-align:left;font:700 13px var(--head);text-transform:uppercase;letter-spacing:.04em;color:var(--dnavy);border-bottom:2px solid var(--gold);padding:8px}
 .ptable td{border-bottom:1px solid var(--line);padding:8px;vertical-align:top}
 .ptable td.num,.ptable th.num{text-align:right}
@@ -82,10 +89,12 @@ body.trade-hvac .chip.active{background:var(--gold);color:var(--dnavy);border-co
 .chart{width:100%;height:auto;margin-top:8px}
 .chart-lab{font:500 9px var(--mono);fill:var(--gray)}
 .sup-note{color:var(--gray);font-size:14px;margin:8px 0 0}
-.hist{width:100%;border-collapse:collapse;margin-top:10px;font-size:14px}
+.hist{width:100%;border-collapse:collapse;margin-top:10px;font-size:14px;table-layout:fixed}
+.hist th:nth-child(1){width:26%}.hist th:nth-child(2){width:24%}.hist th:nth-child(3){width:24%}.hist th:nth-child(4){width:26%}
 .hist th{text-align:left;font:700 12px var(--head);text-transform:uppercase;letter-spacing:.04em;color:var(--dnavy);border-bottom:2px solid var(--gold);padding:6px}
 .hist td{border-bottom:1px solid var(--line);padding:6px}
-.hist td.num{font-family:var(--mono);white-space:nowrap}
+.hist td.num{font-family:var(--mono)}
+.hist td{vertical-align:top}
 .roll-row{display:flex;justify-content:space-between;gap:12px;padding:10px 2px;border-bottom:1px solid var(--line);align-items:baseline}
 .roll-row:last-child{border-bottom:0}
 .roll-name{font-weight:600}
