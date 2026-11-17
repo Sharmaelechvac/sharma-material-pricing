@@ -5,6 +5,7 @@ One app, two links — Electrical and HVAC prices are never blended:
 - Landing: https://sharmaelechvac.github.io/sharma-material-pricing/
 - Electrical: https://sharmaelechvac.github.io/sharma-material-pricing/electrical/
 - HVAC: https://sharmaelechvac.github.io/sharma-material-pricing/hvac/
+- Combined: https://sharmaelechvac.github.io/sharma-material-pricing/combined/
 
 Both trade pages sit behind the office code (same lock as Sharma AR / P&L).
 Prices are published only as `prices.enc.json` (AES-GCM, key from the office
@@ -27,6 +28,5 @@ SHARMA_PASSCODE=... python3 tools/encrypt_prices.py   # -> prices.enc.json
 git add prices.enc.json && git commit -m "Refresh material prices" && git push
 ```
 
-Publishing: pushes to `main` are copied to `gh-pages` by
-`.github/workflows/publish.yml`; the site updates in about a minute. Never
-edit `gh-pages` by hand.
+Publishing: GitHub Pages serves the `main` branch root directly (same setup
+as the EXJ tracker); a push updates the site in about a minute.
