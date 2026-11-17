@@ -96,8 +96,13 @@
         if (tb !== ta) return tb - ta;
         return b.idx - a.idx;
       });
-      it.latest = it.rows[0].e;
-      it.prev = it.rows.length > 1 ? it.rows[1].e : null;
+      // Headline rule (Sanjay, 2026-11-17): the headline price is the newest
+      // TICKET / Sanjay-rule price; web list prices headline only when an item
+      // has no ticket price at all. Full history (incl. web) stays in the sheet.
+      var pool = it.rows.filter(function (r) { return priceType(r.e) !== "web"; });
+      if (!pool.length) pool = it.rows;
+      it.latest = pool[0].e;
+      it.prev = pool.length > 1 ? pool[1].e : null;
       it.change = null;
       if (it.prev && isFinite(Number(it.latest.price)) && isFinite(Number(it.prev.price)) && Number(it.prev.price) !== 0) {
         var diff = Number(it.latest.price) - Number(it.prev.price);
@@ -143,7 +148,7 @@
     }
 
     var newest = "";
-    all.forEach(function (e) { if (e.date && e.date > newest) newest = e.date; });
+    items.forEach(function (it) { if (it.latest.date && it.latest.date > newest) newest = it.latest.date; });
     document.getElementById("asof").textContent =
       (newest ? "Prices as of " + fmtDate(newest) : "No dated prices on file") +
       " · " + all.length + " price entries on file" + (COMBINED ? " across both trades." : " for " + LABEL + ".");
@@ -252,10 +257,10 @@
       var line = xy.map(function (p) { return p[0] + "," + p[1]; }).join(" ");
       var last = xy[xy.length - 1];
       return '<svg class="chart" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Price history chart">' +
-        '<polyline points="' + line + '" fill="none" stroke="#264387" stroke-width="2"/>' +
+        '<polyline points="' + line + '" fill="none" stroke="#F0A846" stroke-width="2"/>' +
         '<text x="' + P + '" y="11" class="chart-lab">' + money(hiP) + "</text>" +
         '<text x="' + P + '" y="' + (H - 20) + '" class="chart-lab">' + money(loP) + "</text>" +
-        '<circle cx="' + last[0] + '" cy="' + last[1] + '" r="4.5" fill="#F0A846" stroke="#1a2f61" stroke-width="1.5"/>' +
+        '<circle cx="' + last[0] + '" cy="' + last[1] + '" r="4.5" fill="#ffffff" stroke="#F0A846" stroke-width="1.5"/>' +
         '<text x="' + P + '" y="' + (H - 4) + '" class="chart-lab">' + esc(pts[0].date) + "</text>" +
         '<text x="' + (W - P) + '" y="' + (H - 4) + '" text-anchor="end" class="chart-lab">' + esc(pts[pts.length - 1].date) + "</text></svg>";
     }
@@ -274,7 +279,7 @@
       var rows = it.rows.map(function (r) {
         var e = r.e;
         return "<tr><td class='num'>" + (e.date ? esc(e.date) : "no date") + "</td><td class='num'>" + money(e.price) +
-          (e.unit ? " / " + esc(e.unit) : "") + "</td><td>" + esc(e.supplier) + "</td><td>" + (e.source ? esc(e.source) : "no source") + "</td></tr>";
+          (e.unit ? " / " + esc(e.unit) : "") + "</td><td>" + esc(e.supplier) + "</td><td>" + (e.source ? esc(e.source) : "no source") + "<br>" + flagsFor(e) + "</td></tr>";
       }).join("");
       sheet.innerHTML = '<div class="sheet-head"><span class="sheet-title">Price history — ' + esc(it.name) + "</span>" +
         (COMBINED ? tradeTag(it.trade) : "") +
