@@ -6,14 +6,14 @@
 <meta name="robots" content="noindex">
 <title>Electrical Material Pricing — Sharma Electric &amp; HVAC</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700&family=Inter:wght@400;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700&family=Inter:wght@400;600&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../styles.css">
 </head>
 <body>
 <header class="top">
   <div class="top-in">
     <img class="logo" src="../assets/logo.png" alt="Sharma Electric &amp; HVAC" width="900" height="193">
-    <div class="app-name">Material Pricing</div>
+    <div class="app-name">Material Prices</div>
   </div>
 </header>
 <div class="band navy"><div class="band-in">Electrical Material Pricing</div></div>
@@ -22,29 +22,29 @@
   <section class="stats" id="stats" aria-label="Key numbers"></section>
   <p class="asof-line" id="asof"></p>
   <section class="panel">
-    <h2>Price list — Electrical</h2>
+    <h2>Prices — Electrical</h2>
     <div class="controls">
       <div class="ctl-row">
-        <input id="q" type="search" placeholder="Search item or supplier" aria-label="Search item or supplier">
+        <input id="q" type="search" placeholder="Search wire, breakers, boxes…" aria-label="Search items">
         <select id="sort" aria-label="Sort items">
-          <option value="name">Sort: Name</option>
-          <option value="price">Sort: Price</option>
-          <option value="updated">Sort: Last updated</option>
-          <option value="change">Sort: Biggest change</option>
-          <option value="oldest">Sort: Oldest price</option>
+          <option value="name">Name</option>
+          <option value="price">Price</option>
+          <option value="updated">Newest first</option>
+          <option value="change">Biggest change</option>
+          <option value="oldest">Oldest first</option>
         </select>
       </div>
+      <div class="cats" id="cats"></div>
       <div class="chips" id="chips"></div>
     </div>
     <div id="items"></div>
-    <div id="tablewrap"></div>
     <div id="sheet" hidden></div>
   </section>
-  <section class="panel">
-    <h2>Per-House Materials — Electrical</h2>
+  <section class="panel boxed">
+    <h2>Cost per house — Electrical</h2>
     <div id="rollup"></div>
   </section>
-  <p class="foot">Prices come only from the office price tracker (supplier tickets and quotes). A price is flagged STALE when its ticket is more than 45 days old or the tracker marks it stale — verify before quoting. Sharma Electric &amp; HVAC</p>
+  <p class="foot">Every price here is a price we pay a distributor, from the office price tracker. Prices older than 45 days are marked for a re-check — check before you quote. Sharma Electric &amp; HVAC</p>
 </main>
 <script>window.PRICE_TRADE = "electrical"; window.PRICE_LABEL = "Electrical";</script>
 <script src="../lock.js"></script>
