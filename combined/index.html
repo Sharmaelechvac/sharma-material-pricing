@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>Combined Pricing — Sharma Material Pricing</title>
+<title>Elec + HVAC Material Pricing — Sharma Electric &amp; HVAC</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700&family=Inter:wght@400;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../styles.css">
@@ -16,29 +16,39 @@
     <div class="app-name">Material Pricing</div>
   </div>
 </header>
-<div class="band navy goldline"><div class="band-in">Combined — Electrical + HVAC</div></div>
+<div class="band navy goldline"><div class="band-in">Elec + HVAC Material Pricing</div></div>
+<nav class="switch"><a href="../electrical/">Electrical only</a><a href="../hvac/">HVAC only</a></nav>
 <main class="wrap" id="app" hidden>
-  <section class="stats" id="stats" aria-label="Key numbers"></section>
+  <section class="stats c4" id="stats" aria-label="Key numbers"></section>
+  <p class="asof-line" id="asof"></p>
   <section class="panel">
-    <h2>All prices — both trades</h2>
-    <p class="note" id="asof"></p>
+    <h2>Price list — both trades</h2>
     <div class="controls">
-      <input id="q" type="search" placeholder="Search item" aria-label="Search item">
-      <select id="supplier" aria-label="Filter by supplier"><option value="">All suppliers</option></select>
-      <label class="chk"><input type="checkbox" id="staleOnly"> Stale only</label>
-    </div>
-    <div class="seg" role="group" aria-label="Filter by trade">
-      <button type="button" class="seg-btn active" data-t="all">All</button>
-      <button type="button" class="seg-btn" data-t="electrical">Electrical</button>
-      <button type="button" class="seg-btn" data-t="hvac">HVAC</button>
+      <div class="ctl-row">
+        <input id="q" type="search" placeholder="Search item or supplier" aria-label="Search item or supplier">
+        <select id="sort" aria-label="Sort items">
+          <option value="name">Sort: Name</option>
+          <option value="price">Sort: Price</option>
+          <option value="updated">Sort: Last updated</option>
+          <option value="change">Sort: Biggest change</option>
+        </select>
+      </div>
+      <div class="seg" role="group" aria-label="Filter by trade">
+        <button type="button" class="seg-btn active" data-t="all">All</button>
+        <button type="button" class="seg-btn" data-t="electrical">Electrical</button>
+        <button type="button" class="seg-btn" data-t="hvac">HVAC</button>
+      </div>
+      <div class="chips" id="chips"></div>
     </div>
     <div id="items"></div>
+    <div id="tablewrap"></div>
+    <div id="sheet" hidden></div>
   </section>
   <section class="panel">
-    <h2>Per-house rollup — Combined</h2>
+    <h2>Per-House Materials — Combined</h2>
     <div id="rollup"></div>
   </section>
-  <p class="foot">Prices come only from the office price tracker (supplier tickets and quotes). A price is flagged STALE when its ticket is more than 30 days old — verify before quoting. Sharma Electric &amp; HVAC</p>
+  <p class="foot">Prices come only from the office price tracker (supplier tickets and quotes). A price is flagged STALE when its ticket is more than 45 days old or the tracker marks it stale — verify before quoting. Sharma Electric &amp; HVAC</p>
 </main>
 <script>window.PRICE_TRADE = "combined"; window.PRICE_LABEL = "Combined";</script>
 <script src="../lock.js"></script>

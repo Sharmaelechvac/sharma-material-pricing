@@ -2,3 +2,7 @@
 prices.json
 *.plain.json
 .env
+
+# price data working files — never committed
+prices.json
+*.csv

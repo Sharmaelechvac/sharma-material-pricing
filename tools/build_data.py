@@ -8,7 +8,9 @@ CSV columns: item, price, unit, supplier, date, source_doc, status
 Optional columns used when present: house (house or job name for the rollup).
 
 Trade split: an item whose name starts with "HVAC:" belongs to HVAC (the
-prefix is stripped for display); everything else is electrical.
+prefix is stripped for display). Rows whose status is tagged "(HVAC)" in the
+tracker (the web-priced HVAC equipment and duct lines) are HVAC too.
+Everything else is electrical.
 Only rows with a parseable price and a non-empty item are carried over.
 prices.json is a local working file (gitignored); encrypt it with
 tools/encrypt_prices.py before committing — only prices.enc.json is published.
@@ -36,10 +38,13 @@ def main():
                 except ValueError:
                     skipped += 1
                     continue
+                status_raw = (row.get("status") or "")
                 trade = "electrical"
                 if item.upper().startswith("HVAC:"):
                     trade = "hvac"
                     item = item.split(":", 1)[1].strip()
+                elif "(HVAC)" in status_raw.upper():
+                    trade = "hvac"
                 e = {
                     "item": item,
                     "trade": trade,

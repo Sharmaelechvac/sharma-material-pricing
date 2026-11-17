@@ -1,6 +1,7 @@
 /* Sharma Material Pricing — one app, three links.
-   /electrical and /hvac are single-trade. /combined shows both trades with
-   ELEC/HVAC tags, trade subtotals, and the only trade filter in the app.
+   /electrical and /hvac each load only their own trade's rows.
+   /combined (Sanjay's section-12 addition) shows both trades with ELEC/HVAC
+   tags, trade subtotals and the only trade filter in the app.
    Data comes only from prices.enc.json, decrypted in the browser by lock.js
    after the office code is entered. No prices are stored in this file. */
 (function () {
@@ -8,7 +9,8 @@
   var MODE = window.PRICE_TRADE; // electrical | hvac | combined
   var LABEL = window.PRICE_LABEL || MODE;
   var COMBINED = MODE === "combined";
-  var STALE_DAYS = 30;
+  var STALE_DAYS = 45;   // Mark guidance section 10: stale = 45 days old (one constant; Sanjay can change)
+  var CHANGED_DAYS = 30; // "Changed 30d" chip window
 
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
@@ -18,20 +20,41 @@
   function money(n) {
     var v = Number(n);
     if (!isFinite(v)) return esc(n);
-    return "$" + v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    var d = Math.abs(v) >= 100 ? 2 : 4; // keep per-foot precision from the tracker
+    return "$" + v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: d });
   }
   function parseDate(s) {
-    var d = new Date(String(s || "") + "T12:00:00");
+    if (!s) return null;
+    var d = new Date(String(s) + "T12:00:00");
     return isNaN(d.getTime()) ? null : d;
+  }
+  function fmtDate(s) {
+    var d = parseDate(s);
+    return d ? d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "";
   }
   function ageDays(e) {
     var d = parseDate(e.date);
-    if (!d) return null;
-    return Math.floor((Date.now() - d.getTime()) / 86400000);
+    return d ? Math.floor((Date.now() - d.getTime()) / 86400000) : null;
   }
-  function isStale(e) { var a = ageDays(e); return a !== null && a > STALE_DAYS; }
+  function statusStale(e) { return /STALE/i.test(e.status || ""); }
+  function isStale(e) {
+    if (statusStale(e)) return true;
+    var a = ageDays(e);
+    return a !== null && a > STALE_DAYS;
+  }
   function tradeTag(t) {
-    return t === "hvac" ? '<span class="tag hvac">HVAC</span>' : '<span class="tag elec">Elec</span>';
+    return t === "hvac" ? '<span class="tag hvac">HVAC</span>' : '<span class="tag elec">ELEC</span>';
+  }
+  function flagsFor(e) {
+    var out = "";
+    if (isStale(e)) {
+      var a = ageDays(e);
+      out += '<span class="tag stale">STALE' + (a !== null ? " · " + a + " days" : "") + "</span>";
+    }
+    if (/SANJAY PRICE/i.test(e.status || "")) out += '<span class="tag rule">SANJAY PRICE</span>';
+    if (!e.source) out += '<span class="tag nosrc">no source</span>';
+    if (!e.date) out += '<span class="tag nosrc">no date</span>';
+    return out;
   }
 
   SharmaLock.load("../prices.enc.json", { appName: "Material Pricing — " + LABEL, logo: "../assets/logo.png" })
@@ -46,11 +69,11 @@
     var all = COMBINED ? entries.slice() : entries.filter(function (e) { return e.trade === MODE; });
     document.getElementById("app").hidden = false;
 
-    // Group by item (per trade on the combined page); latest = newest date, later row wins ties.
+    // Group rows by item (per trade on the combined page); latest = newest date, later row wins ties.
     var byKey = {};
     all.forEach(function (e, idx) {
       var k = (COMBINED ? e.trade + "|" : "") + e.item.toLowerCase();
-      if (!byKey[k]) byKey[k] = { name: e.item, trade: e.trade, rows: [] };
+      if (!byKey[k]) byKey[k] = { key: k, name: e.item, trade: e.trade, rows: [] };
       byKey[k].rows.push({ e: e, idx: idx });
     });
     var items = Object.keys(byKey).map(function (k) {
@@ -62,126 +85,235 @@
         return b.idx - a.idx;
       });
       it.latest = it.rows[0].e;
+      it.prev = it.rows.length > 1 ? it.rows[1].e : null;
+      it.change = null;
+      if (it.prev && isFinite(Number(it.latest.price)) && isFinite(Number(it.prev.price)) && Number(it.prev.price) !== 0) {
+        var diff = Number(it.latest.price) - Number(it.prev.price);
+        it.change = { diff: diff, pct: Math.round((diff / Number(it.prev.price)) * 100) };
+      }
+      it.changed30 = false;
+      if (it.change && it.change.diff !== 0) {
+        var a = ageDays(it.latest);
+        it.changed30 = a !== null && a <= CHANGED_DAYS;
+      }
       return it;
-    }).sort(function (a, b) { return a.name.localeCompare(b.name); });
+    });
 
     function latestSum(list) {
       var t = 0;
       list.forEach(function (it) { var v = Number(it.latest.price); if (isFinite(v)) t += v; });
       return t;
     }
-    function staleCount(list) { return list.filter(function (it) { return isStale(it.latest); }).length; }
+    function staleItems(list) { return list.filter(function (it) { return isStale(it.latest); }); }
+    function changeText(it) {
+      if (!it.change || it.change.diff === 0) return "";
+      var s = it.change.diff > 0 ? "+" : "&minus;";
+      return s + money(Math.abs(it.change.diff)) + " (" + (it.change.pct > 0 ? "+" : "") + it.change.pct + "%)";
+    }
 
-    // Numbers-first stat strip.
+    // Numbers-first stat strip (guidance section 3; combined per section 12).
     var stats = document.getElementById("stats");
     if (COMBINED) {
       var ei = items.filter(function (i) { return i.trade === "electrical"; });
       var hi = items.filter(function (i) { return i.trade === "hvac"; });
+      var se = staleItems(ei).length, sh = staleItems(hi).length;
       stats.innerHTML =
-        '<div class="stat navy"><span class="stat-num">' + money(latestSum(ei)) + '</span><span class="stat-lab">Electrical — latest prices</span></div>' +
-        '<div class="stat gold"><span class="stat-num">' + money(latestSum(hi)) + '</span><span class="stat-lab">HVAC — latest prices</span></div>' +
-        '<div class="stat"><span class="stat-num">' + money(latestSum(items)) + '</span><span class="stat-lab">Combined</span></div>' +
-        '<div class="stat"><span class="stat-num">' + staleCount(items) + '</span><span class="stat-lab">Stale prices</span></div>';
+        '<div class="stat navy"><span class="stat-num">' + money(latestSum(ei)) + '</span><span class="stat-lab">Electrical subtotal</span></div>' +
+        '<div class="stat gold"><span class="stat-num">' + money(latestSum(hi)) + '</span><span class="stat-lab">HVAC subtotal</span></div>' +
+        '<div class="stat"><span class="stat-num">' + money(latestSum(items)) + '</span><span class="stat-lab">Combined total</span></div>' +
+        '<button type="button" class="stat stale-tile' + (se + sh > 0 ? " hot" : "") + '" id="staleTile"><span class="stat-num">' + (se + sh) + '</span><span class="stat-lab">Stale — Elec ' + se + " · HVAC " + sh + "</span></button>";
     } else {
-      var sups = {};
-      all.forEach(function (e) { if (e.supplier) sups[e.supplier] = true; });
+      var sc = staleItems(items).length;
       stats.innerHTML =
-        '<div class="stat"><span class="stat-num">' + items.length + '</span><span class="stat-lab">Items tracked</span></div>' +
         '<div class="stat"><span class="stat-num">' + money(latestSum(items)) + '</span><span class="stat-lab">Latest prices total</span></div>' +
-        '<div class="stat"><span class="stat-num">' + staleCount(items) + '</span><span class="stat-lab">Stale prices</span></div>' +
-        '<div class="stat"><span class="stat-num">' + Object.keys(sups).length + '</span><span class="stat-lab">Suppliers</span></div>';
+        '<div class="stat"><span class="stat-num">' + items.length + '</span><span class="stat-lab">Items priced</span></div>' +
+        '<button type="button" class="stat stale-tile' + (sc > 0 ? " hot" : "") + '" id="staleTile"><span class="stat-num">' + sc + '</span><span class="stat-lab">Items stale</span></button>';
     }
 
+    var newest = "";
+    all.forEach(function (e) { if (e.date && e.date > newest) newest = e.date; });
     document.getElementById("asof").textContent =
-      "Tracker updated " + (data.meta && data.meta.generated ? data.meta.generated : "—") +
-      " · " + all.length + " price entr" + (all.length === 1 ? "y" : "ies") + " on file" +
-      (COMBINED ? " across both trades." : " for " + LABEL + ".");
+      (newest ? "Prices as of " + fmtDate(newest) : "No dated prices on file") +
+      " · " + all.length + " price entries on file" + (COMBINED ? " across both trades." : " for " + LABEL + ".");
 
+    // Filter state + chips (guidance section 4).
+    var state = { q: "", supplier: "", stale: false, changed: false, trade: "all", sort: "name" };
     var suppliers = [];
     all.forEach(function (e) { if (e.supplier && suppliers.indexOf(e.supplier) === -1) suppliers.push(e.supplier); });
     suppliers.sort();
-    var sel = document.getElementById("supplier");
-    suppliers.forEach(function (s) {
-      var o = document.createElement("option"); o.value = s; o.textContent = s; sel.appendChild(o);
+    var chips = document.getElementById("chips");
+    function chip(label, kind, val) {
+      return '<button type="button" class="chip" data-kind="' + kind + '" data-val="' + esc(val) + '">' + esc(label) + "</button>";
+    }
+    chips.innerHTML = chip("All suppliers", "supplier", "") +
+      suppliers.map(function (s) { return chip(s, "supplier", s); }).join("") +
+      chip("Stale only", "stale", "") + chip("Changed 30d", "changed", "");
+    function paintChips() {
+      chips.querySelectorAll(".chip").forEach(function (c) {
+        var k = c.getAttribute("data-kind"), v = c.getAttribute("data-val"), on = false;
+        if (k === "supplier") on = state.supplier === v;
+        if (k === "stale") on = state.stale;
+        if (k === "changed") on = state.changed;
+        c.classList.toggle("active", on);
+      });
+      document.querySelectorAll(".seg-btn").forEach(function (b) {
+        b.classList.toggle("active", b.getAttribute("data-t") === state.trade);
+      });
+    }
+    chips.addEventListener("click", function (ev) {
+      var c = ev.target.closest(".chip");
+      if (!c) return;
+      var k = c.getAttribute("data-kind");
+      if (k === "supplier") state.supplier = c.getAttribute("data-val");
+      if (k === "stale") state.stale = !state.stale;
+      if (k === "changed") state.changed = !state.changed;
+      paintChips(); draw();
     });
-
-    var q = document.getElementById("q"), staleOnly = document.getElementById("staleOnly");
-    var tradeFilter = "all";
+    var staleTile = document.getElementById("staleTile");
+    if (staleTile) staleTile.addEventListener("click", function () { state.stale = !state.stale; paintChips(); draw(); });
     if (COMBINED) {
       document.querySelectorAll(".seg-btn").forEach(function (b) {
-        b.addEventListener("click", function () {
-          document.querySelectorAll(".seg-btn").forEach(function (x) { x.classList.remove("active"); });
-          b.classList.add("active");
-          tradeFilter = b.getAttribute("data-t");
-          draw();
-        });
+        b.addEventListener("click", function () { state.trade = b.getAttribute("data-t"); paintChips(); draw(); });
       });
+    }
+    document.getElementById("q").addEventListener("input", function (ev) { state.q = ev.target.value.trim().toLowerCase(); draw(); });
+    document.getElementById("sort").addEventListener("change", function (ev) { state.sort = ev.target.value; draw(); });
+
+    var sheet = document.getElementById("sheet");
+    var openKey = null;
+    function chartSVG(it) {
+      var pts = it.rows.map(function (r) { return r.e; }).filter(function (e) { return parseDate(e.date); });
+      pts.sort(function (a, b) { return parseDate(a.date) - parseDate(b.date); });
+      if (pts.length < 2) return "";
+      var W = 320, H = 96, P = 12;
+      var t0 = parseDate(pts[0].date).getTime(), t1 = parseDate(pts[pts.length - 1].date).getTime();
+      var ps = pts.map(function (e) { return Number(e.price); }).filter(isFinite);
+      if (!ps.length) return "";
+      var lo = Math.min.apply(null, ps), hi = Math.max.apply(null, ps);
+      if (hi === lo) { hi = lo + 1; }
+      var xy = pts.map(function (e) {
+        var x = t1 === t0 ? W / 2 : P + ((parseDate(e.date).getTime() - t0) / (t1 - t0)) * (W - 2 * P);
+        var y = H - 18 - ((Number(e.price) - lo) / (hi - lo)) * (H - 36);
+        return [Math.round(x * 10) / 10, Math.round(y * 10) / 10];
+      });
+      var line = xy.map(function (p) { return p[0] + "," + p[1]; }).join(" ");
+      var last = xy[xy.length - 1];
+      return '<svg class="chart" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Price history chart">' +
+        '<polyline points="' + line + '" fill="none" stroke="#264387" stroke-width="2"/>' +
+        '<circle cx="' + last[0] + '" cy="' + last[1] + '" r="4.5" fill="#F0A846" stroke="#1a2f61" stroke-width="1.5"/>' +
+        '<text x="' + P + '" y="' + (H - 4) + '" class="chart-lab">' + esc(pts[0].date) + "</text>" +
+        '<text x="' + (W - P) + '" y="' + (H - 4) + '" text-anchor="end" class="chart-lab">' + esc(pts[pts.length - 1].date) + "</text></svg>";
+    }
+    function openSheet(it, anchor) {
+      if (openKey === it.key) { sheet.hidden = true; openKey = null; return; }
+      openKey = it.key;
+      var bySup = {};
+      it.rows.forEach(function (r) { if (!bySup[r.e.supplier]) bySup[r.e.supplier] = r.e; });
+      var supNames = Object.keys(bySup);
+      var supNote = "";
+      if (supNames.length > 1) {
+        supNote = '<p class="sup-note">Latest by supplier: ' + supNames.map(function (s) {
+          return esc(s) + " " + money(bySup[s].price) + (bySup[s].date ? " (" + esc(bySup[s].date) + ")" : "");
+        }).join(" · ") + "</p>";
+      }
+      var rows = it.rows.map(function (r) {
+        var e = r.e;
+        return "<tr><td class='num'>" + (e.date ? esc(e.date) : "no date") + "</td><td class='num'>" + money(e.price) +
+          (e.unit ? " / " + esc(e.unit) : "") + "</td><td>" + esc(e.supplier) + "</td><td>" + (e.source ? esc(e.source) : "no source") + "</td></tr>";
+      }).join("");
+      sheet.innerHTML = '<div class="sheet-head"><span class="sheet-title">Price history — ' + esc(it.name) + "</span>" +
+        (COMBINED ? tradeTag(it.trade) : "") +
+        '<button type="button" class="sheet-close" aria-label="Close history">Close</button></div>' +
+        chartSVG(it) + supNote +
+        '<table class="hist"><thead><tr><th>Date</th><th>Price</th><th>Supplier</th><th>Source ticket</th></tr></thead><tbody>' + rows + "</tbody></table>";
+      sheet.hidden = false;
+      sheet.querySelector(".sheet-close").addEventListener("click", function () { sheet.hidden = true; openKey = null; });
+      if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(sheet, anchor.nextSibling);
     }
 
     function draw() {
-      var term = q.value.trim().toLowerCase(), sup = sel.value;
-      var box = document.getElementById("items");
       var shown = items.filter(function (it) {
         var L = it.latest;
-        if (COMBINED && tradeFilter !== "all" && it.trade !== tradeFilter) return false;
-        if (term && it.name.toLowerCase().indexOf(term) === -1) return false;
-        if (sup && L.supplier !== sup && !it.rows.some(function (r) { return r.e.supplier === sup; })) return false;
-        if (staleOnly.checked && !isStale(L)) return false;
+        if (COMBINED && state.trade !== "all" && it.trade !== state.trade) return false;
+        if (state.q) {
+          var inName = it.name.toLowerCase().indexOf(state.q) !== -1;
+          var inSup = it.rows.some(function (r) { return (r.e.supplier || "").toLowerCase().indexOf(state.q) !== -1; });
+          if (!inName && !inSup) return false;
+        }
+        if (state.supplier && !it.rows.some(function (r) { return r.e.supplier === state.supplier; })) return false;
+        if (state.stale && !isStale(L)) return false;
+        if (state.changed && !it.changed30) return false;
         return true;
       });
+      if (state.sort === "price") shown.sort(function (a, b) { return Number(b.latest.price) - Number(a.latest.price); });
+      else if (state.sort === "updated") shown.sort(function (a, b) {
+        var da = parseDate(a.latest.date), db = parseDate(b.latest.date);
+        return (db ? db.getTime() : 0) - (da ? da.getTime() : 0);
+      });
+      else if (state.sort === "change") shown.sort(function (a, b) {
+        var ca = a.change ? Math.abs(a.change.pct) : -1, cb = b.change ? Math.abs(b.change.pct) : -1;
+        return cb - ca;
+      });
+      else shown.sort(function (a, b) { return a.name.localeCompare(b.name); });
+
+      var box = document.getElementById("items");
+      var tw = document.getElementById("tablewrap");
+      sheet.hidden = true; openKey = null;
       if (!all.length) {
-        box.innerHTML = '<p class="empty">No prices in the tracker yet' + (COMBINED ? "" : " for " + esc(LABEL)) +
-          ". Prices appear here as supplier tickets are added to the tracker.</p>";
+        box.innerHTML = '<p class="empty">No prices in the tracker yet' + (COMBINED ? "" : " for " + esc(LABEL)) + ". Prices appear here as supplier tickets are added to the tracker.</p>";
+        tw.innerHTML = "";
         return;
       }
-      if (!shown.length) { box.innerHTML = '<p class="empty">No items match the current search and filters.</p>'; return; }
+      if (!shown.length) { box.innerHTML = '<p class="empty">No items match</p>'; tw.innerHTML = ""; return; }
+
       box.innerHTML = shown.map(function (it) {
-        var L = it.latest, a = ageDays(L), stale = isStale(L);
-        var hist = it.rows.map(function (r, i) {
-          var e = r.e, prev = it.rows[i + 1];
-          var delta = "";
-          if (prev && isFinite(Number(e.price)) && isFinite(Number(prev.e.price))) {
-            var diff = Number(e.price) - Number(prev.e.price);
-            if (diff > 0) delta = '<span class="delta-up">+' + money(diff) + "</span>";
-            else if (diff < 0) delta = '<span class="delta-down">&minus;' + money(-diff) + "</span>";
-            else delta = "no change";
-          }
-          return "<tr><td class='num'>" + esc(e.date) + "</td><td class='num'>" + money(e.price) +
-            (e.unit ? " / " + esc(e.unit) : "") + "</td><td>" + esc(e.supplier) + "</td><td>" +
-            esc(e.source || "") + "</td><td>" + delta + "</td></tr>";
-        }).join("");
-        return '<div class="item"><button class="item-head" aria-expanded="false">' +
-          '<span class="item-name">' + esc(it.name) + "</span>" +
-          (COMBINED ? tradeTag(it.trade) : "") +
-          '<span class="item-price">' + money(L.price) + (L.unit ? " / " + esc(L.unit) : "") + "</span>" +
-          '<span class="item-meta">' + esc(L.supplier) + " · " + esc(L.date) +
-          (a !== null ? " · " + a + "d old" : "") + (L.source ? " · " + esc(L.source) : "") + "</span>" +
-          (stale ? '<span class="tag stale">Stale</span>' : "") +
-          (it.rows.length > 1 ? '<span class="tag">History ' + it.rows.length + "</span>" : "") +
-          '</button><div class="history" hidden><div class="sheet-lab">Price history — ' + esc(it.name) + '</div><table><thead><tr><th>Date</th><th>Price</th><th>Supplier</th><th>Source ticket</th><th>Change</th></tr></thead><tbody>' +
-          hist + "</tbody></table></div></div>";
+        var L = it.latest, ch = changeText(it);
+        return '<div class="item t-' + it.trade + '"><button class="item-head" data-key="' + esc(it.key) + '">' +
+          '<span class="item-line1"><span class="item-name">' + esc(it.name) + "</span>" +
+          '<span class="item-price">' + money(L.price) + "</span></span>" +
+          '<span class="item-line2">' + esc(L.unit || "") + (L.unit ? " · " : "") + esc(L.supplier) +
+          (L.date ? " · " + esc(L.date) : "") + (ch ? ' · <span class="chg">' + ch + "</span>" : "") + "</span>" +
+          '<span class="item-line3">' + (COMBINED ? tradeTag(it.trade) : "") + flagsFor(L) +
+          (L.source ? '<span class="src-chip">' + esc(L.source) + "</span>" : "") +
+          (it.rows.length > 1 ? '<span class="tag">History ' + it.rows.length + "</span>" : "") + "</span>" +
+          "</button></div>";
       }).join("");
+
+      tw.innerHTML = '<table class="ptable"><thead><tr><th>Item</th><th class="num">Latest price</th><th>Unit</th><th>Supplier</th><th class="num">Date</th><th class="num">Change</th><th>Source</th><th>Flags</th></tr></thead><tbody>' +
+        shown.map(function (it) {
+          var L = it.latest;
+          return '<tr data-key="' + esc(it.key) + '"><td>' + esc(it.name) + (COMBINED ? " " + tradeTag(it.trade) : "") + "</td>" +
+            '<td class="num price-cell">' + money(L.price) + "</td><td>" + esc(L.unit || "") + "</td><td>" + esc(L.supplier) + "</td>" +
+            '<td class="num">' + (L.date ? esc(L.date) : "no date") + "</td>" +
+            '<td class="num">' + (changeText(it) || "—") + "</td>" +
+            "<td>" + (L.source ? esc(L.source) : "no source") + "</td><td>" + flagsFor(L) + "</td></tr>";
+        }).join("") + "</tbody></table>";
+
+      var byKeyMap = {};
+      items.forEach(function (it) { byKeyMap[it.key] = it; });
       box.querySelectorAll(".item-head").forEach(function (btn) {
         btn.addEventListener("click", function () {
-          var h = btn.parentElement.querySelector(".history");
-          var open = h.hidden;
-          h.hidden = !open;
-          btn.setAttribute("aria-expanded", String(open));
+          var it = byKeyMap[btn.getAttribute("data-key")];
+          openSheet(it, btn.closest(".item"));
+        });
+      });
+      tw.querySelectorAll("tr[data-key]").forEach(function (tr) {
+        tr.addEventListener("click", function () {
+          var it = byKeyMap[tr.getAttribute("data-key")];
+          openSheet(it, tw);
         });
       });
     }
-    q.addEventListener("input", draw);
-    sel.addEventListener("change", draw);
-    staleOnly.addEventListener("change", draw);
+    paintChips();
     draw();
 
-    // Per-house rollup: latest price per item for the houses named on tracker lines.
+    // Per-house rollup (guidance section 7): only from tracker lines that name a house.
     var roll = document.getElementById("rollup");
     var houses = {};
     all.forEach(function (e) { if (e.house) houses[e.house] = true; });
     var names = Object.keys(houses).sort();
     if (!names.length) {
-      roll.innerHTML = '<p class="empty">No house is named on the tracker lines yet. When a tracker line carries a house or job name, its rollup appears here — latest price per item, summed for that house, with its stale-price count.</p>';
+      roll.innerHTML = '<p class="empty">The price tracker carries no per-house quantity data yet, so no per-house rollup can be built. When tracker lines name a house, its rollup appears here at latest prices with its stale-price count. Quantities are never estimated.</p>';
       return;
     }
     roll.innerHTML = names.map(function (h) {
@@ -199,7 +331,7 @@
         count++;
         if (isStale(e)) stale++;
       });
-      var meta = count + " items at latest price" + (stale ? " · " + stale + " stale" : "");
+      var meta = count + " items at latest price" + (stale ? " · includes " + stale + " stale price" + (stale === 1 ? "" : "s") : "");
       if (COMBINED) {
         return '<div class="roll-row"><span class="roll-name">' + esc(h) + ' <span class="item-meta">(' + meta + ')</span></span>' +
           '<span class="roll-nums"><span class="roll-sub navy-t">Elec ' + money(elec) + '</span>' +
