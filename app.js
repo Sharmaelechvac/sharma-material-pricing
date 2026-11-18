@@ -189,7 +189,10 @@
       (newest ? "Newest price: " + fmtDate(newest) : "No dated prices on file") +
       " · " + all.length + " prices we pay on file" + (COMBINED ? " across both trades." : " for " + LABEL + ".");
 
-    var state = { q: "", supplier: "", stale: false, changed: false, movers: false, trade: "all", cat: "", sort: "name" };
+    var savedView = "cards";
+    try { savedView = localStorage.getItem("mp-view") || "cards"; } catch (e) {}
+    if (["cards", "list", "sheet", "supplier"].indexOf(savedView) === -1) savedView = "cards";
+    var state = { q: "", supplier: "", stale: false, changed: false, movers: false, trade: "all", cat: "", sort: "name", view: savedView };
     var lastView = [];
     var suppliers = [];
     all.forEach(function (e) { if (e.supplier && suppliers.indexOf(e.supplier) === -1) suppliers.push(e.supplier); });
@@ -296,6 +299,20 @@
     });
     document.getElementById("q").addEventListener("input", function (ev) { state.q = ev.target.value.trim().toLowerCase(); draw(); });
     document.getElementById("sort").addEventListener("change", function (ev) { state.sort = ev.target.value; draw(); });
+    var viewsEl = document.getElementById("views");
+    function paintViews() {
+      if (!viewsEl) return;
+      viewsEl.querySelectorAll(".view-btn").forEach(function (b) {
+        b.classList.toggle("active", b.getAttribute("data-view") === state.view);
+      });
+    }
+    if (viewsEl) viewsEl.addEventListener("click", function (ev) {
+      var b = ev.target.closest(".view-btn");
+      if (!b) return;
+      state.view = b.getAttribute("data-view");
+      try { localStorage.setItem("mp-view", state.view); } catch (e) {}
+      paintViews(); draw();
+    });
 
     var sheet = document.getElementById("sheet");
     var openKey = null;
@@ -366,6 +383,11 @@
       if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(sheet, anchor.nextSibling);
     }
 
+    function thumbHtml(it) {
+      if (it.photo) return '<img src="../' + esc(it.photo.src) + '" alt="" loading="lazy">';
+      return ICONS[it.cat] || ICONS.Other;
+    }
+
     function photoHtml(it) {
       if (it.photo) return '<span class="photo"><img src="../' + esc(it.photo.src) + '" alt="' + esc(it.plain) + '" loading="lazy"></span>';
       return '<span class="photo ph">' + (ICONS[it.cat] || ICONS.Other) + '<span class="cap">Photo coming</span></span>';
@@ -432,6 +454,9 @@
 
       var box = document.getElementById("items");
       sheet.hidden = true; openKey = null;
+      // The details sheet gets moved next to the tapped item; move it back
+      // home before re-rendering or it is wiped with the items markup.
+      if (sheet.parentNode && sheet.parentNode !== box.parentNode) box.parentNode.appendChild(sheet);
       if (!all.length) {
         box.innerHTML = '<p class="empty">No distributor prices on file yet' + (COMBINED ? "" : " for " + esc(LABEL)) + ". Prices show up here as supplier tickets are added to the tracker.</p>";
         return;
@@ -440,14 +465,17 @@
         box.innerHTML = '<p class="empty">Nothing matches' + (state.q ? " &lsquo;" + esc(state.q) + "&rsquo;" : "") + ". Try a shorter word, like &lsquo;breaker&rsquo;.</p>";
         return;
       }
-      box.innerHTML = view.map(function (v) {
-        var it = v.it, L = v.e;
-        var note = "";
+      function noteFor(v) {
+        var it = v.it;
         if (v.ch && v.ch.diff !== 0) {
           var up = v.ch.diff > 0, hot = Math.abs(v.ch.pct) > 10;
-          note = '<span class="card-note' + (hot ? " hot" : "") + '">' + (up ? "Up " : "Down ") + money(Math.abs(v.ch.diff)).replace(".00", "") +
+          return '<span class="card-note' + (hot ? " hot" : "") + '">' + (up ? "Up " : "Down ") + money(Math.abs(v.ch.diff)).replace(".00", "") +
             (it.prev && it.prev.date && !state.supplier ? " since " + fmtDate(it.prev.date) : "") + "</span>";
-        } else if (!state.supplier) note = changeNote(it);
+        }
+        return state.supplier ? "" : changeNote(it);
+      }
+      function cardHtml(v) {
+        var it = v.it, L = v.e;
         var staleNote = isStale(L) ? '<span class="card-stale">Old price — worth a re-check</span>' : "";
         return '<div class="card t-' + it.trade + '"><button class="card-main" data-key="' + esc(it.key) + '">' +
           photoHtml(it) +
@@ -455,22 +483,72 @@
           '<span class="card-name">' + esc(it.plain) + "</span>" +
           '<span class="card-price">' + money(L.price) + "</span>" +
           '<span class="card-sub">' + (L.unit ? "per " + esc(L.unit) + " · " : "") + esc(L.supplier) + (COMBINED ? " · " + (it.trade === "hvac" ? "HVAC" : "ELEC") : "") + "</span>" +
-          note + staleNote +
+          noteFor(v) + staleNote +
           '<span class="card-details">Details ›</span>' +
           "</span></button></div>";
-      }).join("");
+      }
+      function listRowHtml(v) {
+        var it = v.it, L = v.e;
+        var staleNote = isStale(L) ? '<span class="card-stale">Old price — worth a re-check</span>' : "";
+        return '<div class="lrow t-' + it.trade + '"><button class="lrow-main" data-key="' + esc(it.key) + '">' +
+          '<span class="lthumb">' + thumbHtml(it) + "</span>" +
+          '<span class="lmain">' +
+          '<span class="lname">' + esc(it.plain) + "</span>" +
+          '<span class="lsub">' + esc(L.supplier) + (L.date ? " · " + fmtDate(L.date) : "") + (COMBINED ? " · " + (it.trade === "hvac" ? "HVAC" : "ELEC") : "") + "</span>" +
+          noteFor(v) + staleNote +
+          "</span>" +
+          '<span class="lprice">' + money(L.price) + '<span class="lunit">' + (L.unit ? "per " + esc(L.unit) : "") + "</span></span>" +
+          "</button></div>";
+      }
+      function sheetHtml() {
+        var rows = view.map(function (v) {
+          var it = v.it, L = v.e;
+          return '<tr data-key="' + esc(it.key) + '" tabindex="0"><td class="pi">' + esc(it.plain) +
+            (it.codes.length ? '<span class="pcodes">' + esc(it.codes.join(", ")) + "</span>" : "") + (COMBINED ? tradeTag(it.trade) : "") + "</td>" +
+            '<td class="num pprice">' + money(L.price) + "</td>" +
+            "<td>" + (L.unit ? esc(L.unit) : "—") + "</td>" +
+            "<td>" + esc(L.supplier) + "</td>" +
+            '<td class="num">' + (L.date ? fmtDate(L.date) : "no date") + "</td>" +
+            "<td>" + (L.source ? esc(L.source) : "no ticket") + "</td>" +
+            "<td>" + flagsFor(L) + "</td></tr>";
+        }).join("");
+        return '<div class="sheetwrap"><table class="psheet"><thead><tr><th>Item</th><th>Price</th><th>Per</th><th>Supplier</th><th>Date</th><th>Ticket</th><th>Status</th></tr></thead><tbody>' + rows + "</tbody></table></div>";
+      }
+      function supplierHtml() {
+        var groups = {}, order = [];
+        view.forEach(function (v) {
+          var sup = v.e.supplier || "No supplier on file";
+          if (!groups[sup]) { groups[sup] = []; order.push(sup); }
+          groups[sup].push(v);
+        });
+        order.sort();
+        return order.map(function (sup) {
+          return '<div class="sup-head">' + esc(sup) + ' <span class="sup-count">' + groups[sup].length + (groups[sup].length === 1 ? " item" : " items") + "</span></div>" +
+            groups[sup].map(listRowHtml).join("");
+        }).join("");
+      }
+
+      box.className = state.view === "cards" ? "" : "v-" + state.view;
+      if (state.view === "list") box.innerHTML = view.map(listRowHtml).join("");
+      else if (state.view === "sheet") box.innerHTML = sheetHtml();
+      else if (state.view === "supplier") box.innerHTML = supplierHtml();
+      else box.innerHTML = view.map(cardHtml).join("");
 
       var byKeyMap = {};
       items.forEach(function (it) { byKeyMap[it.key] = it; });
-      box.querySelectorAll(".card-main").forEach(function (btn) {
-        btn.addEventListener("click", function () {
-          var it = byKeyMap[btn.getAttribute("data-key")];
-          openSheet(it, btn.closest(".card"));
-        });
+      box.querySelectorAll("[data-key]").forEach(function (el) {
+        function go() {
+          var it = byKeyMap[el.getAttribute("data-key")];
+          if (!it) return;
+          openSheet(it, el.closest(".card") || el.closest(".lrow") || null);
+        }
+        el.addEventListener("click", go);
+        if (el.tagName === "TR") el.addEventListener("keydown", function (ev) { if (ev.key === "Enter") go(); });
       });
     }
     paintCats();
     paintChips();
+    paintViews();
     draw();
 
     // Cost per house: only from tracker lines that name a house (never guessed).

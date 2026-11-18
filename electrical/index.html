@@ -7,7 +7,7 @@
 <title>Electrical Material Pricing — Sharma Electric &amp; HVAC</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700&family=Inter:wght@400;600&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../styles.css">
+<link rel="stylesheet" href="../styles.css?v=5">
 </head>
 <body>
 <header class="top">
@@ -34,6 +34,13 @@
           <option value="oldest">Oldest first</option>
         </select>
       </div>
+      <div class="views" id="views" role="group" aria-label="Change how items are shown">
+        <span class="views-lab">View</span>
+        <button type="button" class="view-btn" data-view="cards">Photos</button>
+        <button type="button" class="view-btn" data-view="list">List</button>
+        <button type="button" class="view-btn" data-view="sheet">Sheet</button>
+        <button type="button" class="view-btn" data-view="supplier">By supplier</button>
+      </div>
       <div class="cats" id="cats"></div>
       <div class="chips" id="chips"></div>
     </div>
@@ -48,6 +55,6 @@
 </main>
 <script>window.PRICE_TRADE = "electrical"; window.PRICE_LABEL = "Electrical";</script>
 <script src="../lock.js"></script>
-<script src="../app.js"></script>
+<script src="../app.js?v=5"></script>
 </body>
 </html>
