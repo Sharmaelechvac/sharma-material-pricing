@@ -106,7 +106,7 @@
   var photos = {};
   fetch("../photos.json").then(function (r) { return r.ok ? r.json() : {}; }).then(function (p) { photos = p || {}; }).catch(function () { photos = {}; })
     .then(function () {
-      return SharmaLock.load("../prices.enc.json", { appName: "Material Prices — " + LABEL, logo: "../assets/logo.png" });
+      return SharmaLock.load("../prices.enc.json", { appName: "Material Prices — " + LABEL, logo: "https://sharma-kit.sharma-crew.workers.dev/assets/logo.png" });
     })
     .then(function (data) { render(data); })
     .catch(function (err) {

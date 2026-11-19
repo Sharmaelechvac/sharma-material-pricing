@@ -4,7 +4,7 @@
 :root{
   --navy:#264387; --dnavy:#1a2f61; --gold:#F0A846; --ink:#1d2433;
   --gray:#5b6478; --line:#dfe4ee; --page:#f4f6fb; --goldink:#8a5f14;
-  --head:'Barlow Semi Condensed',sans-serif; --body:'Inter',sans-serif; --mono:'IBM Plex Mono',monospace;
+  --head:'-apple-system','SF Pro Display',Inter,'Segoe UI',sans-serif; --body:'Inter',sans-serif; --mono:'IBM Plex Mono',monospace;
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--page);color:var(--ink);font:400 16px/1.5 var(--body)}
