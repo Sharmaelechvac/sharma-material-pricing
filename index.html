@@ -1,30 +1,43 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="sk">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <title>Sharma Material Pricing</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700&family=Inter:wght@400;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+<meta name="theme-color" content="#264387">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pricing">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="https://sharma-kit.sharma-crew.workers.dev/assets/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://sharma-kit.sharma-crew.workers.dev/assets/favicon-32.png">
+<link rel="stylesheet" href="https://sharma-kit.sharma-crew.workers.dev/sharma-kit.css">
+<link rel="stylesheet" href="styles.css?v=6">
+<script src="https://sharma-kit.sharma-crew.workers.dev/sharma-kit.js" defer></script>
 </head>
-<body>
-<header class="top">
-  <div class="top-in">
-    <img class="logo" src="assets/logo.png" alt="Sharma Electric &amp; HVAC" width="900" height="193">
-    <div class="app-name">Material Pricing</div>
-  </div>
-</header>
+<body class="sk">
+<header class="sk-header"><div class="sk-header__bar">
+  <div class="sk-header__lead"><a class="sk-header__logo" href="./" aria-label="Sharma Electric &amp; HVAC"><img src="https://sharma-kit.sharma-crew.workers.dev/assets/logo-white-header.png" alt="Sharma Electric &amp; HVAC" width="103" height="20"></a></div>
+  <div class="sk-header__title">Material Pricing</div>
+  <div class="sk-header__trail"></div>
+</div></header>
+<div class="sk-offline"></div>
 <main class="wrap">
   <section class="panel">
     <h2>Pick a trade</h2>
     <p class="note">Electrical and HVAC prices are kept separate. Each link opens that trade's pricing only, behind the office code.</p>
-    <a class="trade-link" href="electrical/">Electrical pricing</a>
-    <a class="trade-link gold-link" href="hvac/">HVAC pricing</a>
-    <a class="trade-link" href="combined/">Combined — Electrical + HVAC</a>
+    <div class="sk-list"><a class="sk-row" href="electrical/"><div class="sk-row__body"><div class="sk-row__title">Electrical pricing</div><div class="sk-row__sub">Wire, breakers, boxes and more</div></div><svg class="sk-icon sk-row__chev"><use href="#i-chevron-right"/></svg></a>
+    <a class="sk-row" href="hvac/"><div class="sk-row__body"><div class="sk-row__title">HVAC pricing</div><div class="sk-row__sub">Equipment, line sets, parts</div></div><svg class="sk-icon sk-row__chev"><use href="#i-chevron-right"/></svg></a>
+    <a class="sk-row" href="combined/"><div class="sk-row__body"><div class="sk-row__title">Combined</div><div class="sk-row__sub">Electrical + HVAC in one list</div></div><svg class="sk-icon sk-row__chev"><use href="#i-chevron-right"/></svg></a></div>
   </section>
   <p class="foot">Sharma Electric &amp; HVAC · EC13013924 · CAC1823596</p>
 </main>
+<script>
+if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
+  addEventListener("load", function () { navigator.serviceWorker.register("sw.js?kit=https://sharma-kit.sharma-crew.workers.dev").catch(function(){}); });
+}
+</script>
 </body>
 </html>
