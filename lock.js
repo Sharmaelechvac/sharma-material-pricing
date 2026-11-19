@@ -140,7 +140,7 @@
       root.setAttribute("aria-modal", "true");
       root.setAttribute("aria-labelledby", "sl-h");
       root.innerHTML =
-        '<div class="sl-top"><div class="sl-top-in"><img class="sl-logo" src="' + (opts.logo || "assets/logo.png") +
+        '<div class="sl-top"><div class="sl-top-in"><img class="sl-logo" src="' + (opts.logo || "https://sharma-kit.sharma-crew.workers.dev/assets/logo.png") +
         '" alt="Sharma Electric &amp; HVAC" width="900" height="193"><div class="sl-app"></div></div></div>' +
         '<div class="sl-wrap"><form class="sl-panel" autocomplete="off" novalidate>' +
         '<h2 id="sl-h">Locked</h2><p>Enter the office code to see the numbers.</p>' +
