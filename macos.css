@@ -1,0 +1,14 @@
+/* macOS wide-screen look (Sanjay 2026-11-19) — presentation only, active at >=960px.
+   Phone layout/behaviour unchanged. Sidebar = the trade pages' existing .switch nav
+   (Electrical / HVAC / Combined). The landing and More pages have no .switch nav,
+   so they receive the shared polish only. */
+::selection{background:rgba(38,67,135,.16)}
+@media (min-width:960px){
+  :root{--mac-side:238px}
+  .switch{position:fixed;top:0;bottom:0;left:0;right:auto;width:var(--mac-side);max-width:none;margin:0;padding:150px 10px 14px;text-align:left;background:var(--sk-surface-2,#F7F8FB);border-right:.5px solid var(--sk-line,#dfe4ee);z-index:30;display:flex;flex-direction:column;gap:2px}
+  .switch a{display:flex;align-items:center;min-height:36px;padding:0 12px;margin:0;border-radius:8px;font-size:14px;color:var(--ink)}
+  .switch a:hover{background:var(--sk-fill-2,rgba(118,118,128,.08));text-decoration:none}
+  .switch ~ .wrap{margin-left:var(--mac-side);margin-right:auto;max-width:1100px}
+  .sk-row:hover{background:var(--sk-fill-2,rgba(118,118,128,.08))}
+  .card:hover,.item:hover{border-color:#c3cede}
+}
